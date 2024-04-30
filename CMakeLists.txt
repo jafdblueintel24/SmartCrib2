@@ -1,0 +1,6 @@
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(DBUS REQUIRED dbus-1)
+include_directories(${DBUS_INCLUDE_DIRS})
+link_directories(${DBUS_LIBRARY_DIRS})
+add_executable(myenv2 myenv2.cpp)
+target_link_libraries(myenv2 ${DBUS_LIBRARIES})
