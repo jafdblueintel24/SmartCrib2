@@ -9,7 +9,7 @@ Adafruit-PlatformDetect==3.46.0
 Adafruit-PureIO==1.1.11
 Adafruit_DHT==1.4.0
 aniso8601==9.0.1
-arandr
+
 asgiref==3.6.0
 astroid==2.14.2
 asttokens==2.2.1
