@@ -24,7 +24,7 @@ from flask import redirect, url_for
 
 import speech_recognition as sr
 
-
+from threading import Thread
 
 
 
@@ -136,10 +136,18 @@ def toggle_relay():
     GPIO.output(RELAY_PIN, not current_state)
 
 
+
 @app.route('/toggle', methods=['POST'])
 def toggle():
     toggle_relay()
     return 'Relay toggled'
+
+# Function to automatically toggle the fan for 30 seconds
+def auto_toggle_fan():
+    toggle_relay()  # Turn on the fan
+    time.sleep(30)  # Wait for 30 seconds
+    toggle_relay()  # Turn off the fan
+    
 
     # Route for Baby Information page
 @app.route('/baby_info')
@@ -237,33 +245,21 @@ def turn_off():
 
 
 
+# Route to handle sensor data
 @app.route('/sensor_data')
 def sensor_data():
     try:
-
-        # Connect to the SQLite database
-        conn = sqlite3.connect('sensor_data.db')
-        c = conn.cursor()
-
         # Read sensor data
-        temperature_c = sensor.temperature
-        temperature_f = temperature_c * (9 / 5) + 32
-        humidity = sensor.humidity  # Apply scaling factor (scaling removed)
+        humidity = sensor.humidity
 
-        # Store sensor data in the database
-        c.execute("INSERT INTO sensor_readings (temperature_c, temperature_f, humidity) VALUES (?, ?, ?)",
-                  (temperature_c, temperature_f, humidity))
-        conn.commit()
-
-         # Close the connection
-        conn.close()
+        # Check if humidity value is defined and exceeds 66%
+        if humidity is not None and humidity > 66:
+            # Start a new thread to automatically toggle the fan
+            fan_thread = Thread(target=auto_toggle_fan)
+            fan_thread.start()
 
         # Return sensor data as JSON
-        return jsonify({
-            'temperature_c': temperature_c,
-            'temperature_f': temperature_f,
-            'humidity': humidity
-        })
+        return jsonify({'humidity': humidity})
     except RuntimeError as error:
         # Handle sensor reading errors
         return jsonify({'error': str(error)})
